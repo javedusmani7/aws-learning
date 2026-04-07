@@ -17,3 +17,7 @@ exports.getUser = async (userId) => {
 exports.getMessage = () => {
   return "User service working ✅";
 };
+
+exports.updateUser = async (userId, data) => {
+  return await userRepo.updateUser(userId, data);
+};

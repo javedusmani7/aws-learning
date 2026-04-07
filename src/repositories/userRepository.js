@@ -20,3 +20,19 @@ exports.getUser = async (userId) => {
 
   return result.Item;
 };
+
+exports.updateUser = async (userId, data) => {
+  await dynamo.update({
+    TableName: TABLE,
+    Key: { userId },
+    UpdateExpression: "set #name = :name",
+    ExpressionAttributeNames: {
+      "#name": "name",
+    },
+    ExpressionAttributeValues: {
+      ":name": data.name,
+    },
+  }).promise();
+
+  return { userId, ...data };
+};

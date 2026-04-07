@@ -10,6 +10,7 @@ provider:
       Action:
         - dynamodb:PutItem
         - dynamodb:GetItem
+        - dynamodb:UpdateItem
       Resource: "*"
 
 functions:
@@ -31,6 +32,12 @@ functions:
       - httpApi:
           path: /user/{id}
           method: get
+  updateUser:
+    handler: src/handlers/updateUser.handler
+    events:
+      - httpApi:
+          path: /user/{id}
+          method: put
 
 resources:
   Resources:
