@@ -5,6 +5,16 @@ provider:
   name: aws
   runtime: nodejs18.x
 
+  httpApi:
+    payload: '2.0'
+    authorizers:
+      cognitoAuth:
+        type: jwt
+        identitySource: $request.header.Authorization
+        issuerUrl: https://cognito-idp.us-east-1.amazonaws.com/us-east-1_eWj10lf1H
+        audience:
+          - 5e9v5dkfpjsnml27g3u25lu2qm
+
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -15,36 +25,54 @@ provider:
       Resource: "*"
 
 functions:
+
+  # Public API (no auth)
   api:
     handler: src/handlers/hello.handler
     events:
       - httpApi:
           path: /
           method: get
+
+  # CREATE (Protected)
   createUser:
     handler: src/handlers/createUser.handler
     events:
       - httpApi:
           path: /user
           method: post
+          authorizer:
+            name: cognitoAuth
+
+  # READ (Protected)
   getUser:
     handler: src/handlers/getUser.handler
     events:
       - httpApi:
           path: /user/{id}
           method: get
+          authorizer:
+            name: cognitoAuth
+  
+  # UPDATE (Protected)
   updateUser:
     handler: src/handlers/updateUser.handler
     events:
       - httpApi:
           path: /user/{id}
           method: put
+          authorizer:
+            name: cognitoAuth
+  
+  # DELETE (Protected)
   deleteUser:
     handler: src/handlers/deleteUser.handler
     events:
       - httpApi:
           path: /user/{id}
           method: delete
+          authorizer:
+            name: cognitoAuth
 
 resources:
   Resources:
