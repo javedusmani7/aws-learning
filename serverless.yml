@@ -11,6 +11,7 @@ provider:
         - dynamodb:PutItem
         - dynamodb:GetItem
         - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
       Resource: "*"
 
 functions:
@@ -38,6 +39,12 @@ functions:
       - httpApi:
           path: /user/{id}
           method: put
+  deleteUser:
+    handler: src/handlers/deleteUser.handler
+    events:
+      - httpApi:
+          path: /user/{id}
+          method: delete
 
 resources:
   Resources:

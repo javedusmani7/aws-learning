@@ -21,3 +21,7 @@ exports.getMessage = () => {
 exports.updateUser = async (userId, data) => {
   return await userRepo.updateUser(userId, data);
 };
+
+exports.deleteUser = async (userId) => {
+  return await userRepo.deleteUser(userId);
+};

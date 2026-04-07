@@ -36,3 +36,12 @@ exports.updateUser = async (userId, data) => {
 
   return { userId, ...data };
 };
+
+exports.deleteUser = async (userId) => {
+  await dynamo.delete({
+    TableName: TABLE,
+    Key: { userId },
+  }).promise();
+
+  return { message: "User deleted" };
+};
