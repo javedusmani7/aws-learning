@@ -1,9 +1,42 @@
 service: aws-learning
 frameworkVersion: '3'
 
+useDotenv: true
+
+plugins:
+  - serverless-esbuild
+  - serverless-dotenv-plugin
+
+custom:
+  esbuild:
+    bundle: true
+    minify: true
+    sourcemap: false
+    exclude:
+      - aws-sdk
+    target: node18
+    platform: node
+    concurrency: 10
+
 provider:
   name: aws
   runtime: nodejs18.x
+  region: us-east-1
+
+  httpApi:
+    payload: '2.0'
+    authorizers:
+      cognitoAuth:
+        type: jwt
+        identitySource: $request.header.Authorization
+        issuerUrl: https://cognito-idp.us-east-1.amazonaws.com/us-east-1_eWj10lf1H
+        audience:
+          - 5e9v5dkfpjsnml27g3u25lu2qm
+
+  environment:
+    COGNITO_CLIENT_ID: 5e9v5dkfpjsnml27g3u25lu2qm
+    COGNITO_USER_POOL_ID: us-east-1_eWj10lf1H
+    USERS_TABLE: ${env:USERS_TABLE}
 
   iamRoleStatements:
     - Effect: Allow
@@ -14,37 +47,108 @@ provider:
         - dynamodb:DeleteItem
       Resource: "*"
 
+    - Effect: Allow
+      Action:
+        - cognito-idp:SignUp
+        - cognito-idp:AdminConfirmSignUp
+        - cognito-idp:InitiateAuth
+      Resource: "*"
+
 functions:
+
+  # Public API (no auth)
   api:
     handler: src/handlers/hello.handler
     events:
       - httpApi:
           path: /
           method: get
+
+  # 🔓 SIGNUP (Public)
+  signup:
+    handler: src/handlers/auth/signup.handler
+    events:
+      - httpApi:
+          path: /signup
+          method: post
+
+  # 🔓 LOGIN (Public)
+  login:
+    handler: src/handlers/auth/login.handler
+    events:
+      - httpApi:
+          path: /login
+          method: post
+  
+  # 🔓 Me (Protected)
+  getMe:
+    handler: src/handlers/users/getMe.handler
+    events:
+      - httpApi:
+          path: /me
+          method: get
+          authorizer:
+            name: cognitoAuth
+  
+  # 🔓 Me (Protected)
+  putMe:
+    handler: src/handlers/users/putMe.handler
+    events:
+      - httpApi:
+          path: /me
+          method: put
+          authorizer:
+            name: cognitoAuth
+  
+  # 🔓 Me (Protected)
+  deleteMe:
+    handler: src/handlers/users/deleteMe.handler
+    events:
+      - httpApi:
+          path: /me
+          method: delete
+          authorizer:
+            name: cognitoAuth
+
+  # CREATE (Protected)
   createUser:
     handler: src/handlers/createUser.handler
     events:
       - httpApi:
           path: /user
           method: post
+          authorizer:
+            name: cognitoAuth
+
+  # READ (Protected)
   getUser:
     handler: src/handlers/getUser.handler
     events:
       - httpApi:
           path: /user/{id}
           method: get
+          authorizer:
+            name: cognitoAuth
+  
+  # UPDATE (Protected)
   updateUser:
     handler: src/handlers/updateUser.handler
     events:
       - httpApi:
           path: /user/{id}
           method: put
+          authorizer:
+            name: cognitoAuth
+  
+  # DELETE (Protected)
   deleteUser:
     handler: src/handlers/deleteUser.handler
     events:
       - httpApi:
           path: /user/{id}
           method: delete
+          authorizer:
+            name: cognitoAuth
 
 resources:
   Resources:
