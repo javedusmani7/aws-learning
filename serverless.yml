@@ -37,8 +37,12 @@ provider:
     COGNITO_CLIENT_ID: 5e9v5dkfpjsnml27g3u25lu2qm
     COGNITO_USER_POOL_ID: us-east-1_eWj10lf1H
     USERS_TABLE: ${env:USERS_TABLE}
+    SQS_USER_SIGNUP_QUEUE_URL:
+      Ref: UserSignupQueue
 
   iamRoleStatements:
+
+    # allow DynamoDB actions for user management
     - Effect: Allow
       Action:
         - dynamodb:PutItem
@@ -47,12 +51,23 @@ provider:
         - dynamodb:DeleteItem
       Resource: "*"
 
+    # allow Cognito actions for signup and login
     - Effect: Allow
       Action:
         - cognito-idp:SignUp
         - cognito-idp:AdminConfirmSignUp
         - cognito-idp:InitiateAuth
+        - cognito-idp:AdminDeleteUser
       Resource: "*"
+
+    # Allow sending messages to SQS for user signup events
+    - Effect: Allow
+      Action:
+        - sqs:SendMessage
+      Resource:
+        Fn::GetAtt:
+          - UserSignupQueue
+          - Arn
 
 functions:
 
@@ -149,9 +164,24 @@ functions:
           method: delete
           authorizer:
             name: cognitoAuth
+  
+  # SQS Worker for User Created Events
+  userCreatedWorker:
+    handler: src/handlers/events/userCreated.handler
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - UserSignupQueue
+              - Arn
 
 resources:
   Resources:
+    UserSignupQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: UserSignupQueue
+
     UsersTable:
       Type: AWS::DynamoDB::Table
       Properties:
