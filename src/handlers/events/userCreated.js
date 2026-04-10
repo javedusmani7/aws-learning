@@ -4,6 +4,12 @@ exports.handler = async (event) => {
       const body = JSON.parse(record.body);
 
       console.log("User Created Event:", body);
+      
+      // ❌ Simulate failure
+      if(!body.email) {
+        throw new Error("Email missing!");
+      }
+
       // Example use cases:
       // ✅ Send email
       // ✅ Send welcome notification

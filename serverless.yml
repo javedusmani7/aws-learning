@@ -177,10 +177,24 @@ functions:
 
 resources:
   Resources:
+
+    # ✅ DLQ
+    UserSignupDLQ:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: UserSignupDLQ
+
+    # ✅ Main Queue with DLQ config
     UserSignupQueue:
       Type: AWS::SQS::Queue
       Properties:
         QueueName: UserSignupQueue
+        RedrivePolicy:
+          deadLetterTargetArn:
+            Fn::GetAtt:
+              - UserSignupDLQ
+              - Arn
+          maxReceiveCount: 3
 
     UsersTable:
       Type: AWS::DynamoDB::Table
