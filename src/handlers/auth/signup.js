@@ -1,6 +1,7 @@
 require("dotenv").config();
 const { CognitoIdentityProviderClient, SignUpCommand, AdminConfirmSignUpCommand } = require("@aws-sdk/client-cognito-identity-provider");
 const { createUser } = require("../../repositories/userRepository");
+const { sendUserCreatedEvent } = require("../../services/sqsService");
 
 const client = new CognitoIdentityProviderClient({
   region: process.env.AWS_REGION,
@@ -51,6 +52,13 @@ export const handler = async (event) => {
     };
 
     await createUser(user);
+
+    // ✅ Step 4: Send message to SQS
+    await sendUserCreatedEvent({
+      userId: user.userId,
+      email: user.email,
+    });
+
     return {
       statusCode: 201,
       body: JSON.stringify({
