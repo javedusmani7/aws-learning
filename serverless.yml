@@ -174,15 +174,10 @@ functions:
             Fn::GetAtt:
               - UserSignupQueue
               - Arn
+          batchSize: 1
 
 resources:
   Resources:
-
-    # ✅ DLQ
-    UserSignupDLQ:
-      Type: AWS::SQS::Queue
-      Properties:
-        QueueName: UserSignupDLQ
 
     # ✅ Main Queue with DLQ config
     UserSignupQueue:
@@ -195,6 +190,23 @@ resources:
               - UserSignupDLQ
               - Arn
           maxReceiveCount: 3
+
+    # ✅ DLQ
+    UserSignupDLQ:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: UserSignupDLQ
+    
+    # ✅ DLQ Processor
+    UserSignupDLQProcessor:
+      handler: src/handlers/events/userSignupDLQProcessor.handler
+      events:
+        - sqs:
+            arn:
+              Fn::GetAtt:
+                - UserSignupDLQ
+                - Arn
+            batchSize: 1
 
     UsersTable:
       Type: AWS::DynamoDB::Table

@@ -6,7 +6,7 @@ exports.handler = async (event) => {
       console.log("User Created Event:", body);
       
       // ❌ Simulate failure
-      if(!body.email) {
+      if(!body.email || body.email === "javed@gmail.com") {
         throw new Error("Email missing!");
       }
 
@@ -16,8 +16,12 @@ exports.handler = async (event) => {
       // ✅ Analytics tracking
     }
 
-    return { statusCode: 200 };
+    console.log("Success:", body.userId);
+    // return { statusCode: 200 };
   } catch (err) {
     console.error("Worker Error:", err);
+    
+    // 🔥 THIS IS CRITICAL
+    throw err;
   }
 };
